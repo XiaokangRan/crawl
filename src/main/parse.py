@@ -8,7 +8,7 @@ from lxml import etree
 import re
 import json
 import redis
-import pymongo
+#import pymongo
 import time
 
 from multiprocessing.dummy import Pool as ThreadPool
@@ -22,10 +22,10 @@ proxy = {'https': '36.71.150.87:80'}
 class Spider:
 
     def __init__(self):
-        self.config()
+        #self.config()
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36'
-        }
+            }
         self.proxies = None
     def time_cal(self):
         now = time.time()
@@ -36,7 +36,7 @@ class Spider:
         # 初始化log
         abs_path = os.path.abspath(sys.argv[0])
         try:
-            log_config_file_path = 'F:\\Git Program\\crawl\\src\\log\\log_config.yaml'
+            log_config_file_path = 'E:\\Git Program\\crawl\\src\\log\\log_config.yaml'
             with open(log_config_file_path, 'r', encoding='utf-8') as f:
                 #log_config = yaml.load(f)
                 log_config = yaml.safe_load(f.read())
@@ -48,7 +48,7 @@ class Spider:
 
         # 初始化配置
         try:
-            spider_cofig_file_path = 'F:\\Git Program\\crawl\\src\\conf\\spider_config.yaml'
+            spider_cofig_file_path = 'E:\\Git Program\\crawl\\src\\conf\\spider_config.yaml'
             with open(spider_cofig_file_path, 'r', encoding='utf-8') as f:
                 spider_config = yaml.safe_load(f.read())
                 self.config = spider_config
@@ -124,6 +124,7 @@ class Spider:
         response = self.get_html(url)
         if response is not None:
             soup = etree.HTML(response)
+            #test = html.xpath('//a')
             return soup
         else:
             return None
