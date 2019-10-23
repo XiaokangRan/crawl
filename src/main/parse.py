@@ -9,6 +9,7 @@ import re
 import json
 import redis
 import pymongo
+import time
 
 from multiprocessing.dummy import Pool as ThreadPool
 import os
@@ -23,9 +24,13 @@ class Spider:
     def __init__(self):
         self.config()
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36'
         }
         self.proxies = None
+    def time_cal(self):
+        now = time.time()
+        print(time.time() - now)
+        return
 
     def config(self):
         # 初始化log
@@ -73,15 +78,22 @@ class Spider:
             self.spider_log.info('mongodb初始化失败' + str(err))
         """
 
+    def web_browser(self):
+        # browser
+        opt = webdriver.ChromeOptions()
+        opt.set_headless()
+        self.browser = webdriver.Chrome(options=opt)
+        #self.browser.quit()
+
+    def browser_test(self, url="https://baike.baidu.com/starrank"):
+        self.web_browser()
+        self.browser.get(url)
+        print(self.browser.page_source)
+        score_num_element = self.browser.find_elements_by_class_name("star-name")
+        return score_num_element
+
     def proxy(self):
         return
-
-    def browser(self):
-        # browser
-        opt = Options()
-        opt.add_argument('--headless')
-        opt.add_argument('--disable-gpu')
-        self.browser = webdriver.Chrome(options=opt)
 
     def _is_parse_movie_id(self, name):
         try:
@@ -103,6 +115,12 @@ class Spider:
             return None
 
     def get_xpath_soup(self, url):
+        """
+        use：result = soup.xpath("/html/body/div[1]/div/div[4]/div[1]/table/tbody/tr[1]/td[2]/a/div[2]/p[1]")[0].text
+            or: result = soup.xpath("/html/body/div[1]/div/div[4]/div[1]/table/tbody/tr[1]/td[2]/a/div[2]/p[1]/text()")
+        :param url: "https://baike.baidu.com/starrank"
+        :return: soup
+        """
         response = self.get_html(url)
         if response is not None:
             soup = etree.HTML(response)
@@ -119,7 +137,6 @@ class Spider:
             return None
         return soup
 
-    @staticmethod
     def parse_page_info(response):
         return
 
