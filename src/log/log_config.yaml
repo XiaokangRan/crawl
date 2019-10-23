@@ -17,7 +17,7 @@ handlers:
     mode: 'w'
     formatter: simple
     level: INFO
-    filename: '../log/movie_spider.log'
+    filename: 'F:\\Git Program\\crawl\\src\\log\\spider.log'
 loggers:
   spider:
     level: INFO

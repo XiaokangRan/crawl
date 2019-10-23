@@ -1,10 +1,10 @@
 import logging
 import logging.config
 import yaml
-
+import sys
 import requests
 from bs4 import BeautifulSoup
-
+from lxml import etree
 import re
 import json
 import redis
@@ -21,19 +21,21 @@ proxy = {'https': '36.71.150.87:80'}
 class Spider:
 
     def __init__(self):
-        self.__config()
+        self.config()
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
         }
         self.proxies = None
 
-    def __config(self):
+    def config(self):
         # 初始化log
+        abs_path = os.path.abspath(sys.argv[0])
         try:
-            log_config_file_path = '../log/log_config.yaml'
+            log_config_file_path = 'F:\\Git Program\\crawl\\src\\log\\log_config.yaml'
             with open(log_config_file_path, 'r', encoding='utf-8') as f:
-                log_config = yaml.load(f)
-                logging.config.dictConfig(log_config)
+                #log_config = yaml.load(f)
+                log_config = yaml.safe_load(f.read())
+            logging.config.dictConfig(log_config)
             self.spider_log = logging.getLogger('spider')
             self.spider_log.info('Logger初始化成功')
         except Exception as err:
@@ -41,9 +43,9 @@ class Spider:
 
         # 初始化配置
         try:
-            spider_cofig_file_path = '../conf/spider_config.yaml'
+            spider_cofig_file_path = 'F:\\Git Program\\crawl\\src\\conf\\spider_config.yaml'
             with open(spider_cofig_file_path, 'r', encoding='utf-8') as f:
-                spider_config = yaml.load(f)
+                spider_config = yaml.safe_load(f.read())
                 self.config = spider_config
                 self.spider_log.info('Config初始化成功')
         except Exception as err:
@@ -61,6 +63,7 @@ class Spider:
             self.spider_log.error('Redis初始化失败' + str(err))
 
         # Mongo
+        """
         try:
             myclient = pymongo.MongoClient('localhost', 27017)
             dblist = myclient.list_database_names()
@@ -68,8 +71,9 @@ class Spider:
             self.mytable = mydb['info']
         except Exception as err:
             self.spider_log.info('mongodb初始化失败' + str(err))
+        """
 
-    def __proxy(self):
+    def proxy(self):
         return
 
     def browser(self):
@@ -91,10 +95,29 @@ class Spider:
         except Exception as err:
             return False
 
-    @staticmethod
     def get_html(self, url):
         r = requests.get(url, headers=self.headers, proxies=self.proxies, timeout=3)
-        return r.text
+        if r.status_code == 200:
+            return r.text
+        else:
+            return None
+
+    def get_xpath_soup(self, url):
+        response = self.get_html(url)
+        if response is not None:
+            soup = etree.HTML(response)
+            return soup
+        else:
+            return None
+
+    def get_soup(self, url):
+        response = self.get_html(url)
+        if response is not None:
+            soup = BeautifulSoup(response, 'html5lib')
+            return soup
+        else:
+            return None
+        return soup
 
     @staticmethod
     def parse_page_info(response):
