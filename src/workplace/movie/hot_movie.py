@@ -25,19 +25,10 @@ class HotMovie(Spider):
         all_data = []
         page = 0
         while page < 121:
-            #self.browser.get(self.url)
             soup = BeautifulSoup(self.browser.page_source, "html.parser")
-
-            #/html/body/div[1]/div[3]/div[1]/div[3]/div[1]/div/div[1]/div[2]/div[1]/div[1]
-            #soup = etree.HTML(self.browser.page_source)
-            #test = soup.xpath('//a')
-
             movie_list_1 = soup.find("div",attrs={'id':"content_left"}).find('div', attrs={'class':'c-border'}).find('div', attrs={
                 'class':'op_exactqa_main'}).find('div',attrs={"class":'op_exactqa_body'}).find_all('div', attrs={
                 'class':"op_exactqa_item c-gap-bottom c-span6 "})
-
-            #movie_list_1 = soup.find_all("div",attrs={'class':"op_exactqa_item c-gap-bottom c-span6 "})
-
             movie_list_2 = soup.find("div",attrs={'id':"content_left"}).find('div', attrs={'class':'c-border'}).find('div', attrs={
                 'class':'op_exactqa_main'}).find('div',attrs={"class":'op_exactqa_body'}).find_all('div', attrs={
                 'class': "op_exactqa_item c-gap-bottom c-span6 c-span-last"})
@@ -52,10 +43,6 @@ class HotMovie(Spider):
                 name = movie_info[1].text
                 rate = movie_info[2].text
                 all_data.append((name, rate))
-            #star_name_list = self.browser.find_elements_by_class_name("op_exactqa_item c-gap-bottom c-span6 ")
-            #print(star_name_list[-1].text)
-            #actor_names = [actor.text for actor in star_name_list]
-            #all_data.extend(actor_names)
             self.browser.find_element_by_xpath("//span[contains(text(),'下一页')]").click()
             page = page + 1
             print("page is: "+str(page))
@@ -73,16 +60,15 @@ class HotMovie(Spider):
         star_name_list = soup.find_all("p", attrs={"class": "star-name"})
 
     def run(self):
-        if True:  #try:
+        try:
             self.web_browser()
             self.browser.get(self.url)
             self.crawl_all_info()
             self.browser.quit()
-        #except Exception as err:
-        #self.browser.close()
-        #    print(str(err))
+        except Exception as err:
+            self.browser.quit()
+            print(str(err))
 
 if __name__ == '__main__':
-    actor_spider = HotMovie()
-    actor_spider.run()
-
+    movie_spider = HotMovie()
+    movie_spider.run()
