@@ -1,7 +1,8 @@
 import threading
 import os, sys
 import pickle
-
+##https://www.jianshu.com/p/a4aedd66af7c
+#把要执行的代码写到run函数里面 线程在创建后会直接运行run函数
 lock=threading.Lock()
 class MyThread(threading.Thread):
     def __init__(self):
