@@ -34,4 +34,3 @@ for i, name in enumerate(names):
     lines += title + ',' + name + ',' + value + '\n'
     print(title + ',' + name + ',' + value + '\n')
 
-/html/body/div[4]/div[4]/div/div[1]/div[1]/div[25]
