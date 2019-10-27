@@ -40,10 +40,14 @@ class HtmlParse(object):
             for i, name in enumerate(names):
                 # name
                 temp = Selector(text=name).xpath('//dt/text()|//dt/a/text()').extract()  # 得到key值
-                name = ''.join(temp).replace('\n', '').replace(',', '，').replace('\xa0', '').replace(' ', '')
+                name = ''.join(temp).strip().replace('\n', '').replace(',', '，').replace('\xa0', '').replace(' ', '')
                 # value
                 temp = Selector(text=values[i]).xpath('//dd/text()|//dd/a/text()').extract()
-                value = ''.join(temp).replace('\n', ';').replace(',', '，').replace('\xa0', '')
+                value = ''.join(temp).strip().replace(',', '，').replace('\xa0', '')
+                #replace('\n', ';').
+                #while(len(value)>0 and value[-1] == '\n'):
+                #    value = value[:-1]
+                value = value.replace('\n', '、')
                 movie_data.append((title, name, value))
 
             roles = selector.xpath('//dl[contains(@class, "roleIntrodcution-descritpion")]').extract()
@@ -51,13 +55,13 @@ class HtmlParse(object):
                 soup = BeautifulSoup(role, 'html5lib')
                 # role_name
                 role_name = soup.find(name='div', class_="role-name").find(name='span',class_="item-value").text
-                role_name = role_name.replace("\n", '').replace('\xa0', '').replace(',', '，')
+                role_name = role_name.strip().replace("\n", '').replace('\xa0', '').replace(',', '，')
                 # role_actor
                 role_actor = soup.find(name='div', class_="role-actor").find(name='span',class_="item-value").text
-                role_actor = role_actor.replace("\n", '').replace('\xa0', '').replace(',', '，')
+                role_actor = role_actor.strip().replace("\n", '').replace('\xa0', '').replace(',', '，')
                 #role_intor
                 role_intor = soup.find(name='dd', class_="role-description").text
-                role_intor = role_intor.replace("\n", '').replace('\xa0', '').replace(',', '，')
+                role_intor = role_intor.strip().replace("\n", '').replace('\xa0', '').replace(',', '，')
 
                 movie_data.append((title, role_name, role_actor))
                 role_data.append((title, role_name, role_actor, role_intor))
@@ -69,38 +73,40 @@ class HtmlParse(object):
 def run(url):
     try:
         url = 'https://baike.baidu.com/item/' + url
-        print(url)
+        #print(url)
         download = HtmlDownloader()
         parse = HtmlParse()
         contents = download.download(url)
         movie_data, role_data = parse.parse(contents)
         lock.acquire()
+        """
         if movie_data is not None:
             if len(movie_data) != 0:
                 movie_save.append(movie_data)
         if role_data is not None:
             if len(role_data) != 0:
                 role_intro_save.append(role_data)
+        """
         lock.release()
         time.sleep(1)
+        if len(movie_data) < 1:
+            print(url)
+        return movie_data, role_data
     except Exception as err:
         print(err)
 
-def init(l, m, r):
+
+def init(l):
     global lock
-    global movie_save
-    global role_intro_save
     lock = l
-    movie_save = m
-    role_intro_save = r
 
 if __name__ == '__main__':
     #ulrs = set()
     urls = url_manager.UrlManager()
     # 读取电影名
-    with open('movie_test.txt', encoding='utf-8') as f:
+    with open('movie.txt', encoding='utf-8') as f:
         lines = f.readlines()
-    lines = [line.strip() for line in lines]
+    lines = [line.strip().split(',')[0] for line in lines]
     movie_name = []
     for line in lines:
         urls.add_new_url(line)
@@ -110,21 +116,26 @@ if __name__ == '__main__':
     role_intro_save = []
     count_thread = 12
     lock = multiprocessing.Lock()
-    pool = multiprocessing.Pool(processes=count_thread, initializer=init, initargs=(lock, movie_save, role_intro_save))
-    pool.map(run, movie_name)
+    pool = multiprocessing.Pool(processes=count_thread, initializer=init, initargs=(lock,))
+    results = pool.map(run, movie_name)
     pool.close()
     pool.join()
+
+    for result in results:
+        movie_save.append(result[0])
+        role_intro_save.append(result[1])
     print(".........saving.........")
     pickle.dump(movie_save, open(save_path, 'wb'))
     pickle.dump(role_intro_save, open('./save_role', 'wb'))
     print(".........saved.........")
-    print (movie_save)
+    print (movie_save[0])
 
 
+"""
 manager = multiprocessing.Manager()
 movie_list = manager.list()
 role_list = manager.list()
-
+"""
 
 
 
