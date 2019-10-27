@@ -8,7 +8,7 @@ import time
 import sys
 from multiprocessing.dummy import Pool as ThreadPool
 import multiprocessing
-
+from multiprocessing import Manager
 
 
 class HtmlDownloader(object):
@@ -66,37 +66,6 @@ class HtmlParse(object):
             print("htmlParse occur err")
             return None, None
 
-
-def movie(x):
-    if urls.has_new_url():
-        try:
-            lock.acquire()
-            url = urls.get_new_url()
-            print (url)
-            url = 'https://baike.baidu.com/item/' + url
-            lock.release()
-            download = HtmlDownloader()
-            parse = HtmlParse()
-            contents = download.download(url)
-            movie_data, role_data = parse.parse(contents)
-            lock.acquire()
-            if movie_data is not None:
-                if len(movie_data) != 0:
-                    movie_save.append(movie_data)
-            if role_data is not None:
-                if len(role_data) != 0:
-                    role_intro_save.append(role_data)
-            lock.release()
-            time.sleep(1)
-        except KeyboardInterrupt:
-            print(err)
-            print('save state', sys.exc_info())
-            print(".........saving.........")
-            pickle.dump(movie_save, open(save_path, 'wb'))
-            pickle.dump(role_intro_save, open('./save_role', 'wb'))
-            print(".........saved.........")
-            sys.exit(1)
-
 def run(url):
     try:
         url = 'https://baike.baidu.com/item/' + url
@@ -109,7 +78,6 @@ def run(url):
         if movie_data is not None:
             if len(movie_data) != 0:
                 movie_save.append(movie_data)
-                print(movie_data)
         if role_data is not None:
             if len(role_data) != 0:
                 role_intro_save.append(role_data)
@@ -117,7 +85,14 @@ def run(url):
         time.sleep(1)
     except Exception as err:
         print(err)
-        #sys.exit(1)
+
+def init(l, m, r):
+    global lock
+    global movie_save
+    global role_intro_save
+    lock = l
+    movie_save = m
+    role_intro_save = r
 
 if __name__ == '__main__':
     #ulrs = set()
@@ -126,25 +101,29 @@ if __name__ == '__main__':
     with open('movie_test.txt', encoding='utf-8') as f:
         lines = f.readlines()
     lines = [line.strip() for line in lines]
+    movie_name = []
     for line in lines:
         urls.add_new_url(line)
+        movie_name.append(line)
     save_path = './save'
     movie_save = []
     role_intro_save = []
     count_thread = 12
-    #movie_data = pickle.load(open(save_path, 'rb'))
-
     lock = multiprocessing.Lock()
-    # lock.acquire()
-    # lock.release()
-    pool = multiprocessing.Pool(processes=count_thread)
-    if urls.has_new_url():
-        url = urls.get_new_url()
-        pool.map(movie, [url])
-        pool.close()
-        pool.join()
-    #print(return_data)
+    pool = multiprocessing.Pool(processes=count_thread, initializer=init, initargs=(lock, movie_save, role_intro_save))
+    pool.map(run, movie_name)
+    pool.close()
+    pool.join()
+    print(".........saving.........")
+    pickle.dump(movie_save, open(save_path, 'wb'))
+    pickle.dump(role_intro_save, open('./save_role', 'wb'))
+    print(".........saved.........")
+    print (movie_save)
 
+
+manager = multiprocessing.Manager()
+movie_list = manager.list()
+role_list = manager.list()
 
 
 
